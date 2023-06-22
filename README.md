@@ -85,7 +85,7 @@ Then execute the following command to run DRBpred from the script directory on t
 
 ```
 cd script
-poetry run python run_DRBpred.py -f "featuresv1" -o "./output/" -d "DATABASE_PATH"
+poetry run python run_DRBpred.py -f "featuresv2" -o "./output/" -d "DATABASE_PATH"
 ```
 
 - Finally, check **output** folder for results. The output directory contains predicted lebels with probabilities for each residues.

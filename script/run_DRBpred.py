@@ -29,20 +29,22 @@ def checkforNAN(df,seqlength):
 
 # merge all features into one file     
 def mergedata(PrintP,label):
-    id_list =open("../Features/id_list.txt" ,"r")
-    output_dir ="../output/merge_features/"
+    id_list =open("../Dataset/example/id_list.txt" ,"r")
+    dnaoutput_dir ="../output/dna_merge_features/"
+    rnaoutput_dir ="../output/rna_merge_features/"
     output_file_end=".csv"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    
-    fasta_dir="../Features/FASTA/"
+    if not os.path.exists(dnaoutput_dir):
+        os.makedirs(dnaoutput_dir)
+    if not os.path.exists(rnaoutput_dir):
+        os.makedirs(rnaoutput_dir)
+    fasta_dir="../Dataset/example/FASTA/"
         
     missing_list=[]
     flag=0
     for pid in id_list:
         # print(pid)
         pid=pid.strip()
-        output_file_name=output_dir+pid+output_file_end
+        # output_file_name=dnaoutput_dir+pid+output_file_end
         
         read_fasta= open(fasta_dir+pid+".fasta", "r")
         fasta=read_fasta.readline()
@@ -131,7 +133,8 @@ def mergedata(PrintP,label):
         SpotDisorder_column=[x.strip() for x in SpotDisorder_column ]
         df9=pd.read_csv(source_dir,index_col=0 )
         df9.columns=SpotDisorder_column
-        checkforNAN(df9,seqlength)        
+        checkforNAN(df9,seqlength)  
+        df9.columns=["Spot_"+ s for s in  df9.columns]      
         if PrintP: print("SpotDisorder",df9.shape)  
         
         #SpotDisorder Probability
@@ -170,10 +173,21 @@ def mergedata(PrintP,label):
             
         if(merged.isnull().values.any()):
             print("Merge files have NAN")
-            
-        merged.to_csv(output_dir+"/"+pid+'.csv',index=False,header=label) 
+
+        dnaselected_feat=pd.read_csv("./DNASelected_Feat_96.csv")
+
+        ss=["Target"]+dnaselected_feat.iloc[:,0].tolist()
   
-    return merged.shape
+        dnamerged = merged[ss]       
+        dnamerged.to_csv(dnaoutput_dir+"/"+pid+'.csv',index=False,header=label) 
+
+        rnaselected_feat=pd.read_csv("./RNASelected_Feat_96.csv")
+        ss=["Target"]+rnaselected_feat.iloc[:,0].tolist()
+   
+        rnamerged = merged[ss]      
+        rnamerged.to_csv(rnaoutput_dir+"/"+pid+'.csv',index=False,header=label) 
+  
+    return rnamerged.shape
 
 # run windowing code
 def windowing(len,startwindow_size,endwindow_size):
@@ -183,13 +197,24 @@ def windowing(len,startwindow_size,endwindow_size):
     windowintput.write(str(startwindow_size)+ '\n')
     windowintput.write(str(endwindow_size)+ '\n')
     windowintput.close()
-    output_dir ="../output/Windowed_file/"
+
+    output_dir ="../output/dna_Windowed_file/"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    bashCommand='javac run_windowing.java '
+    output_dir ="../output/rna_Windowed_file/"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    bashCommand='javac run_windowing_dna.java '
     output = subprocess.check_output(['bash','-c', bashCommand])
-    bashCommand='java run_windowing'
+    bashCommand='java run_windowing_dna'
+    output = subprocess.check_output(['bash','-c', bashCommand])
+    print(output.decode('utf-8')) 
+
+    bashCommand='javac run_windowing_rna.java '
+    output = subprocess.check_output(['bash','-c', bashCommand])
+    bashCommand='java run_windowing_rna'
     output = subprocess.check_output(['bash','-c', bashCommand])
     print(output.decode('utf-8')) 
 
@@ -199,18 +224,21 @@ def getprediction():
     workspace="../output"
     pathlib.Path(workspace).mkdir(parents=True, exist_ok=True) 
 
-    X_test=pd.read_csv("../output/Windowed_file/feat_119_w_11.csv",header=None).to_numpy()
-    X_test=X_test[:,1:]
+    dnaX_test=pd.read_csv("../output/dna_Windowed_file/feat_96_w_11.csv",header=None).to_numpy()
+    dnaX_test=dnaX_test[:,1:]
+
+    rnaX_test=pd.read_csv("../output/rna_Windowed_file/feat_96_w_11.csv",header=None).to_numpy()
+    rnaX_test=rnaX_test[:,1:]
 
     # scaler= joblib.load("../models/phi_scaler.pkl")
     # X_test = scaler.transform(X_test)
 
 
     dnasaved_model = joblib.load("../models/dna_model.pkl")
-    dnaproba = dnasaved_model.predict_proba(X_test)
+    dnaproba = dnasaved_model.predict_proba(dnaX_test)
 
     rnasaved_model = joblib.load("../models/rna_model.pkl")
-    rnaproba = rnasaved_model.predict_proba(X_test)
+    rnaproba = rnasaved_model.predict_proba(rnaX_test)
   
 
     id_list =open("../Dataset/example/id_list.txt" ,"r")
@@ -269,7 +297,7 @@ def collectfeatures(containername, database_path):
     print(output.decode('utf-8')) 
 
     print("Pulling docker image")
-    bashCommand="docker pull wasicse/featureextract:1.0"
+    bashCommand="docker pull wasicse/featureextract:2.0"
     output = subprocess.check_output(['bash','-c', bashCommand])
     print(output.decode('utf-8')) 
 
@@ -381,17 +409,17 @@ if __name__ == "__main__":
         #Add label to features
         label=True
 
-        # Collect features by running the docker container
-        collectfeatures(options.containerName, options.database_path )
+        # # Collect features by running the docker container
+        # collectfeatures(options.containerName, options.database_path )
 
-        # Merge features
-        merge_shape=mergedata(PrintP,label)
+        # # # Merge features
+        # merge_shape=mergedata(PrintP,label)
 
-        # Windowing 
-        startwindow_size=11
-        endwindow_size=11
-        windowing(str(merge_shape[1]-1),startwindow_size,endwindow_size)
-
+        # # Windowing 
+        # startwindow_size=11
+        # endwindow_size=11
+        # windowing(str(merge_shape[1]-1),startwindow_size,endwindow_size)
+        
         # Get prediction from the windowed features
         getprediction()
 

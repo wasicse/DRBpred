@@ -7,7 +7,7 @@ import java.util.List;
 import java.io.*; 
 import javax.crypto.spec.PSource;
 // this program creates windowed feature files for single cysteine
-public class run_windowing{
+public class run_windowing_rna{
 	
 	public static void main(String[] args) throws IOException {	
 		
@@ -28,9 +28,9 @@ public class run_windowing{
 
  		// int num_of_features = 112; // you should provide exact number of features here without Target
 	
-		String idListPath = "../Features/id_list.txt";
-		String combinedFeatureDir = "../output/merge_features/";
-		String singleCysWindowedFilesDir = "../output/Windowed_file/";
+		String idListPath = "../Dataset/example/id_list.txt";
+		String combinedFeatureDir = "../output/rna_merge_features/";
+		String singleCysWindowedFilesDir = "../output/rna_Windowed_file/";
 		
 		for(int ws = start_ws; ws <= end_ws; ws=ws+2){
 			
