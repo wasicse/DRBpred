@@ -40,6 +40,13 @@ We have tested DRBpred on Ubuntu 20.04. You would need to install the following 
 
     For more details, visit: https://github.com/pyenv/pyenv
 
+    Alternatively, Python version 3.9.5 can be installed using Anaconda.
+    
+    ```
+    conda create -n py39 python=3.9.5 
+    conda activate py39
+    ``` 
+
 3. Poetry version 1.3.2
 
     ```
@@ -70,13 +77,15 @@ project
 - Retrieve the code
 
 ```
-github clone https://github.com/wasicse/DRBpred.git
+git clone https://github.com/wasicse/DRBpred.git
 
 ```
 
 To run the program, first install all required libraries by running the following command:
 
 ```
+
+POETRY_VIRTUALENVS_IN_PROJECT="true"
 poetry install
 
 ```
