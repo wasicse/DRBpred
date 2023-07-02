@@ -257,18 +257,17 @@ def getprediction():
       
         frnaproba=rnaproba[start:end] 
         rnapred = (frnaproba[:,1] >= rnathreshold).astype(int)   
-        dnaresult=np.hstack((np.array(list(fasta)).astype(str).reshape(-1,1), np.round(fdnaproba[:,1], 3).astype(str).reshape(-1,1) ,dnapred.astype(str).reshape(-1,1))) 
-        rnaresult=np.hstack((np.array(list(fasta)).astype(str).reshape(-1,1), np.round(frnaproba[:,1], 3).astype(str).reshape(-1,1) ,rnapred.astype(str).reshape(-1,1))) 
-       
-        with open("../output/"+pid+"_dnaPred.txt", "ab") as f:
+        result=np.hstack((np.array(list(fasta)).astype(str).reshape(-1,1), 
+            np.round(fdnaproba[:,1], 3).astype(str).reshape(-1,1) ,
+            dnapred.astype(str).reshape(-1,1), 
+            np.round(frnaproba[:,1], 3).astype(str).reshape(-1,1) ,
+            rnapred.astype(str).reshape(-1,1))) 
+        
+        with open("../output/"+pid+".Pred", "wb") as f:
             f.write((">"+pid+"\n").encode())
-            fmt ='%s','%s','%s'
-            np.savetxt(f, dnaresult, delimiter='\t',fmt=fmt)
-      
-        with open("../output/"+pid+"_rnaPred.txt", "ab") as f:
-            f.write((">"+pid+"\n").encode())
-            fmt ='%s','%s','%s'
-            np.savetxt(f, rnaresult, delimiter='\t',fmt=fmt)
+            f.write(("Residues DNA_Proba DNA_Pred RNA_Proba RNA_Pred\n").encode())
+            fmt ='%s','%s','%s','%s','%s'
+            np.savetxt(f, result, delimiter='\t',fmt=fmt)      
 
         start=fasta.__len__()           
 
@@ -297,7 +296,7 @@ def collectfeatures(containername, database_path):
     print(output.decode('utf-8')) 
 
     print("Pulling docker image")
-    bashCommand="docker pull wasicse/featureextract:2.0"
+    bashCommand="docker pull wasicse/featureextract:1.0"
     output = subprocess.check_output(['bash','-c', bashCommand])
     print(output.decode('utf-8')) 
 
@@ -410,15 +409,15 @@ if __name__ == "__main__":
         label=True
 
         # # Collect features by running the docker container
-        # collectfeatures(options.containerName, options.database_path )
+        collectfeatures(options.containerName, options.database_path )
 
         # # # Merge features
-        # merge_shape=mergedata(PrintP,label)
+        merge_shape=mergedata(PrintP,label)
 
         # # Windowing 
-        # startwindow_size=11
-        # endwindow_size=11
-        # windowing(str(merge_shape[1]-1),startwindow_size,endwindow_size)
+        startwindow_size=11
+        endwindow_size=11
+        windowing(str(merge_shape[1]-1),startwindow_size,endwindow_size)
         
         # Get prediction from the windowed features
         getprediction()
